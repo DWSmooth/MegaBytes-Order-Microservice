@@ -1,18 +1,6 @@
-package com.smoothstack.ordermicroservice.service;
+/*package com.smoothstack.ordermicroservice.service;
 
 import java.time.LocalDateTime;
-
-import com.smoothstack.ordermicroservice.data.FullOrderDetails;
-import com.smoothstack.ordermicroservice.data.Order;
-import com.smoothstack.ordermicroservice.data.OrderCustomer;
-import com.smoothstack.ordermicroservice.data.OrderDriver;
-import com.smoothstack.ordermicroservice.data.OrderItem;
-import com.smoothstack.ordermicroservice.data.OrderRestaurant;
-import com.smoothstack.ordermicroservice.repository.OrderCustomerRepository;
-import com.smoothstack.ordermicroservice.repository.OrderDriverRepository;
-import com.smoothstack.ordermicroservice.repository.OrderItemRepository;
-import com.smoothstack.ordermicroservice.repository.OrderRepository;
-import com.smoothstack.ordermicroservice.repository.OrderRestaurantRepository;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,3 +72,4 @@ public class OrderServiceTest {
     }
     
 }
+*/
