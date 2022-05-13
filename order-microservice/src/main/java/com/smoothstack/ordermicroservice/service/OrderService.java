@@ -11,10 +11,7 @@ import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 
-import org.hibernate.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,34 +25,26 @@ public class OrderService {
 
     @Autowired
     UserRepository userRepo;
+    
     /**
-     * Finds a single order of the given user.
+     * Finds a single order by order ID.
      * 
      * @param userId
      * @param orderId
      * @return
      */
-    public ResponseEntity<OrderInformation> getOrderDetails(Integer userId, Integer orderId) {
-
-        OrderInformation info = new OrderInformation();
-        
-        System.out.println("In get order details");
-
+    public OrderInformation getOrderDetails(Integer userId, Integer orderId) {
         try {
-            List<Order> orders = getUserOrders(userId);
-            if (orders != null && orders.size() > 0) {
-                for (Order o: orders) {
-                    if (o.getId() == orderId) {
-                        info = processOrder(o);
-                        return ResponseEntity.status(HttpStatus.OK).body(info);
-                    }
-                }
+            Order order  = orderRepo.getById(orderId);
+            if (order.getCustomer().getId() != userId) {
+                //TODO: actually throw an error here
+                return null;
             }
-        } catch (MappingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return OrderInformation.getFrontendData(order);
+        } catch (Exception e) {
+            //TODO: actually throw an error here
+            return null;
         }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     /**
@@ -64,21 +53,22 @@ public class OrderService {
      * @param userId The id of the user whos orders are to be retrieved.
      * @return A list of OrderInformation objects, wrapped in a Response entity.
      */
-    public ResponseEntity<List<OrderInformation>> getOrderHistory(Integer userId) {
-        List<OrderInformation> processedOrders = new ArrayList<OrderInformation>();
+    public List<OrderInformation> getOrderHistory(Integer userId) {
         try {
+            List<OrderInformation> processedOrders = new ArrayList<OrderInformation>();
             List<Order> orders = getUserOrders(userId);
             if (orders != null && orders.size() > 0) {
                 for (Order o: orders) {
-                    processedOrders.add(processOrder(o));
+                    processedOrders.add(OrderInformation.getFrontendData(o));
                 }
-                return ResponseEntity.status(HttpStatus.OK).body(processedOrders);
+                return processedOrders;
             }
-        } catch (MappingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            //TODO: actually throw an error here
+            return null;
+        } catch (Exception e) {
+            //TODO: actually throw an error here
+            return null;
         }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     /**
@@ -93,46 +83,9 @@ public class OrderService {
         try {
             user = userRepo.getById(userId);
             orders = orderRepo.findAllByCustomer(user);
-        } catch (MappingException e) {
+        } catch (Exception e) {
             return null;
         }
         return orders;
     }
-
-    /**
-     * Processes an order object into an OrderInformation Object without sensitive information.
-     * 
-     * @param order The order to process.
-     * @return The processed order as an Order Information object.
-     */
-    private OrderInformation processOrder(Order order) {
-        OrderInformation info = OrderInformation.builder()
-            .orderId(order.getId())
-            .orderStatus(order.getOrderStatus())
-            .restaurantNotes(order.getRestaurantNotes())
-            .driverNotes(order.getDriverNotes())
-            .subTotal(order.getSubTotal())
-            .deliveryFee(order.getDeliveryFee())
-            .tax(order.getTax())
-            .tip(order.getTip())
-            .total(order.getTotal())
-            .timeCreated(order.getTimeCreated())
-            .scheduledFor(order.getScheduledFor())
-            .netLoyalty(order.getNetLoyalty())
-            .driverFirstName(
-                order.getDriver()
-                .getUserInformation()
-                .getFirstName()
-            )
-            .restaurantNames(
-                order.getRestaurants()
-                .stream()
-                .map(r -> r.getName())
-                .collect(Collectors.toList())
-            )
-            .discounts(order.getDiscounts())
-            .items(order.getOrderItems())
-            .build();
-        return info;
-    }   
 }

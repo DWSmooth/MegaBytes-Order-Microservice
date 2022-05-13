@@ -85,9 +85,9 @@ public class OrderServiceTest {
 
         // Save Restaurant
 
-        ResponseEntity<OrderInformation> createdDetails = service.getOrderDetails(savedUser.getId(), savedOrder.getId());
+        OrderInformation createdDetails = service.getOrderDetails(savedUser.getId(), savedOrder.getId());
 
-        System.out.println(createdDetails.getBody().toString());
+        System.out.println(createdDetails.toString());
     }
     
 }
