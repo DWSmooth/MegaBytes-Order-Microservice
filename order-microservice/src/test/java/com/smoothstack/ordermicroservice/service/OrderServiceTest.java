@@ -2,6 +2,11 @@
 
 import java.time.LocalDateTime;
 
+import com.smoothstack.common.models.Order;
+import com.smoothstack.common.models.User;
+import com.smoothstack.common.repositories.OrderRepository;
+import com.smoothstack.common.repositories.UserRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,38 +22,30 @@ public class OrderServiceTest {
     OrderRepository orderRepo;
 
     @Autowired
-    OrderCustomerRepository customerRepo;
+    UserRepository userRepo;
 
-    @Autowired
-    OrderDriverRepository driverRepo;
-
-    @Autowired
-    OrderItemRepository itemRepo;
-
-    @Autowired
-    OrderRestaurantRepository restaurantRepo;
 
     @Test
     public void doesServiceGetOrderDetailsById() {
         // Save Order
         Order order = new Order();
-        order.setOrder_status("test status");
-        order.setRestaurant_notes("restaurant note");
-        order.setDriver_notes("driver note");
-        order.setSub_total(35.00d);
-        order.setDelivery_fee(3.00d);
+        order.setOrderStatus("test status");
+        order.setRestaurantNotes("restaurant note");
+        order.setDriverNotes("driver note");
+        order.setSubTotal(35.00d);
+        order.setDeliveryFee(3.00d);
         order.setTax(2.53d);
         order.setTip(5.00d);
         order.setTotal(45.53d);
         LocalDateTime now = LocalDateTime.now();
-        order.setTime_created(now);
-        order.setScheduled_for(now.plusHours(1));
+        order.setTimeCreated(now);
+        order.setScheduledFor(now.plusHours(1));
 
         Order savedOrder = orderRepo.save(order);
 
         // Save Customer
-        OrderCustomer customer = new OrderCustomer(0l, savedOrder.getId());
-        customerRepo.save(customer);
+        User customer = new User();
+        userRepo.save(customer);
 
         // Save Driver
         OrderDriver driver = new OrderDriver(1l, savedOrder.getId());
