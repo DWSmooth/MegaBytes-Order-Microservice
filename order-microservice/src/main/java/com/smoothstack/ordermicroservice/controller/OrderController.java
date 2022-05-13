@@ -1,5 +1,7 @@
 package com.smoothstack.ordermicroservice.controller;
 
+import java.util.List;
+
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.service.OrderService;
 
@@ -16,9 +18,13 @@ public class OrderController {
     @Autowired
     OrderService orderService;
 
-    @RequestMapping(value = "ufd/order-service/orders/{orderId}", method = RequestMethod.GET)
-    public ResponseEntity<OrderInformation> getOrderDetails(@PathVariable Integer orderId) {
-        System.out.println("In order details controller method");
-        return orderService.getOrderDetails(orderId);
+    @RequestMapping(value = "ufd/order-service/{userId}/orders/{orderId}", method = RequestMethod.GET)
+    public ResponseEntity<OrderInformation> getOrderDetails(@PathVariable Integer userId, @PathVariable Integer orderId) {
+        return orderService.getOrderDetails(userId, orderId);
+    }
+
+    @RequestMapping(value = "ufd/order-service/{userId}/orders", method = RequestMethod.GET)
+    public ResponseEntity<List<OrderInformation>> getOrderDetails(@PathVariable Integer userId) {
+        return orderService.getOrderHistory(userId);
     }
 }

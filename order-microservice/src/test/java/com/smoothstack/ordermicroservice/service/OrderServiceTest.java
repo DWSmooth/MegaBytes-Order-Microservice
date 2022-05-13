@@ -1,12 +1,19 @@
-/*package com.smoothstack.ordermicroservice.service;
+package com.smoothstack.ordermicroservice.service;
 
 import java.time.LocalDateTime;
 
 import com.smoothstack.common.models.Order;
+import com.smoothstack.common.models.OrderItem;
+import com.smoothstack.common.models.Restaurant;
 import com.smoothstack.common.models.User;
+import com.smoothstack.common.models.UserInformation;
+import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
+import com.smoothstack.common.repositories.UserInformationRepository;
 import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.ordermicroservice.data.OrderInformation;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,9 +31,30 @@ public class OrderServiceTest {
     @Autowired
     UserRepository userRepo;
 
+    @Autowired
+    UserInformationRepository userInfoRepo;
+
+    @Autowired
+    OrderItemRepository orderItemRepo;
+
 
     @Test
+    @Disabled
     public void doesServiceGetOrderDetailsById() {
+        //Save Customer Information
+        UserInformation userInfo = new UserInformation();
+        userInfo.setId(0);
+        userInfo.setFirstName("John");
+        userInfo.setLastName("Smith");
+        UserInformation savedUserInfo = userInfoRepo.save(userInfo);
+        
+        // Save Customer
+        User user = new User();
+        user.setId(0);
+        user.setUserName("testUser");
+        user.setUserInformation(savedUserInfo);
+        User savedUser = userRepo.save(user);
+        
         // Save Order
         Order order = new Order();
         order.setOrderStatus("test status");
@@ -40,33 +68,26 @@ public class OrderServiceTest {
         LocalDateTime now = LocalDateTime.now();
         order.setTimeCreated(now);
         order.setScheduledFor(now.plusHours(1));
-
+        order.setCustomer(savedUser);
         Order savedOrder = orderRepo.save(order);
 
-        // Save Customer
-        User customer = new User();
-        userRepo.save(customer);
+        
 
         // Save Driver
-        OrderDriver driver = new OrderDriver(1l, savedOrder.getId());
-        driverRepo.save(driver);
 
         // Save Items
-        OrderItem item1 = new OrderItem(savedOrder.getId(), 0l, "", 0.0d, 20.00d);
-        OrderItem item2 = new OrderItem(savedOrder.getId(), 1l, "", 0.0d, 10.00d);
-        OrderItem item3 = new OrderItem(savedOrder.getId(), 2l, "", 0.0d, 5.00d);
-        itemRepo.save(item1);
-        itemRepo.save(item2);
-        itemRepo.save(item3);
+        //OrderItem item1 = new OrderItem(savedOrder.getId(), 0l, "", 0.0d, 20.00d);
+        //OrderItem item2 = new OrderItem(savedOrder.getId(), 1l, "", 0.0d, 10.00d);
+        //OrderItem item3 = new OrderItem(savedOrder.getId(), 2l, "", 0.0d, 5.00d);
+        //orderItemRepo.save(item1);
+        //orderItemRepo.save(item2);
+        //orderItemRepo.save(item3);
 
         // Save Restaurant
-        OrderRestaurant restaurant = new OrderRestaurant(0l, savedOrder.getId());
-        restaurantRepo.save(restaurant);
 
-        ResponseEntity<FullOrderDetails> createdDetails = service.getOrderDetails(savedOrder.getId());
+        ResponseEntity<OrderInformation> createdDetails = service.getOrderDetails(savedUser.getId(), savedOrder.getId());
 
         System.out.println(createdDetails.getBody().toString());
     }
     
 }
-*/
