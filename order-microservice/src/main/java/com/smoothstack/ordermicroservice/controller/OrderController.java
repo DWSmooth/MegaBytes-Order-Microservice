@@ -1,5 +1,6 @@
 package com.smoothstack.ordermicroservice.controller;
 
+import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.service.OrderService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ public class OrderController {
     OrderService orderService;
 
     @RequestMapping(value = "/orders/{orderId}")
-    public Integer getOrderDetails(@PathVariable Long orderId) {
+    public ResponseEntity<OrderInformation> getOrderDetails(@PathVariable Integer orderId) {
         return orderService.getOrderDetails(orderId);
     }
 }
