@@ -1,5 +1,7 @@
 package com.smoothstack.ordermicroservice.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.smoothstack.common.models.Order;
@@ -22,8 +24,11 @@ public class OrderService {
     OrderItemRepository itemRepo;
     
     public ResponseEntity<OrderInformation> getOrderDetails(Integer orderId) {
+
         OrderInformation info = new OrderInformation();
         
+        System.out.println("In get order details");
+
         try {
             Order order = orderRepo.getById(orderId);
             info = OrderInformation.builder()
@@ -57,5 +62,14 @@ public class OrderService {
             //TODO: handle exception
         }
         return ResponseEntity.status(HttpStatus.OK).body(info);
+    }
+
+    public ResponseEntity<List<OrderInformation>> getOrderHistory() {
+        List<OrderInformation> processedOrders = new ArrayList();
+        try {
+            List<Order> orders = orderRepo.findAllByCustomer();
+        } catch (Exception e) {
+            //TODO: handle exception
+        }
     }
 }
