@@ -13,6 +13,7 @@ import com.smoothstack.common.repositories.UserInformationRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,11 @@ public class OrderServiceTest {
     @Autowired
     OrderItemRepository orderItemRepo;
 
+    @BeforeAll
+    @Disabled
+    public static void setUpTestEnvironment() {
+        
+    }
 
     @Test
     @Disabled

@@ -2,7 +2,6 @@ package com.smoothstack.ordermicroservice.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.User;
@@ -55,7 +54,7 @@ public class OrderService {
      */
     public List<OrderInformation> getOrderHistory(Integer userId) {
         try {
-            List<OrderInformation> processedOrders = new ArrayList<OrderInformation>();
+            List<OrderInformation> processedOrders = new ArrayList<>();
             List<Order> orders = getUserOrders(userId);
             if (orders != null && orders.size() > 0) {
                 for (Order o: orders) {
@@ -78,8 +77,8 @@ public class OrderService {
      * @return A list of Order objects representing all of the given users orders.
      */
     private List<Order> getUserOrders(Integer userId) {
-        User user = new User();
-        List<Order> orders = new ArrayList<Order>();
+        User user;
+        List<Order> orders;
         try {
             user = userRepo.getById(userId);
             orders = orderRepo.findAllByCustomer(user);
