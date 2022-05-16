@@ -70,6 +70,20 @@ public class OrderService {
         }
     }
 
+    public Boolean deleteOrder(Integer userId, Integer orderId) {
+        try {
+            Order orderToDelete = orderRepo.getById(orderId);
+            if (orderToDelete.getCustomer().getId() != userId) {
+                orderRepo.delete(orderToDelete);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            //TODO: handle exception
+            return false;
+        }
+    }
+
     /**
      * Finds all of a given users orders.
      * 
