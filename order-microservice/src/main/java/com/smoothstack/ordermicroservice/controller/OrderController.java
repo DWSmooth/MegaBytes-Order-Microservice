@@ -12,30 +12,32 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping(value = "ufd/order-service")
 public class OrderController {
     
     @Autowired
     OrderService orderService;
 
-    @GetMapping(value = "ufd/order-service/{userId}/orders/{orderId}")
+    @GetMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<OrderInformation> getOrderDetails(@PathVariable Integer userId, @PathVariable Integer orderId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderDetails(userId, orderId));
     }
 
-    @GetMapping(value = "ufd/order-service/{userId}/orders")
+    @GetMapping(value = "/{userId}/orders")
     public ResponseEntity<List<OrderInformation>> getOrderHistory(@PathVariable Integer userId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
     }
 
-    @PutMapping(value = "ufd/order-service/{userId}/orders/{orderId}")
+    @PutMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
     }
 
-    @DeleteMapping(value = "ufd/order-service/{userId}/orders/{orderId}")
+    @DeleteMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<Boolean> deleteOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.deleteOrder(userId, orderId));
     }

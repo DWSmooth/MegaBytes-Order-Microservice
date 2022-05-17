@@ -3,6 +3,8 @@ package com.smoothstack.ordermicroservice.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.EntityNotFoundException;
+
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.User;
 import com.smoothstack.common.repositories.OrderItemRepository;
@@ -40,6 +42,9 @@ public class OrderService {
                 return null;
             }
             return OrderInformation.getFrontendData(order);
+        } catch (EntityNotFoundException e) {
+            System.out.println("Order not found");
+            return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
             e.printStackTrace();
@@ -64,6 +69,9 @@ public class OrderService {
                 return processedOrders;
             }
             //TODO: actually throw an error here
+            return null;
+        } catch (EntityNotFoundException e) {
+            System.out.println("User not found.");
             return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
@@ -91,6 +99,9 @@ public class OrderService {
             //TODO: Send confirmation to user email/phone that order has been canceled.
 
             return OrderInformation.getFrontendData(orderRepo.save(orderToCancel));
+        } catch (EntityNotFoundException e) {
+            System.out.println("Order to be canceled not found");
+            return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
             e.printStackTrace();
@@ -113,6 +124,9 @@ public class OrderService {
                 return true;
             }
             return false;
+        } catch (EntityNotFoundException e) {
+            System.out.println("Order to be deleted not found");
+            return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
             e.printStackTrace();
@@ -131,7 +145,10 @@ public class OrderService {
             User user = userRepo.getById(userId);
             List<Order> orders = orderRepo.findAllByCustomer(user);
             return orders;
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
+            System.out.println("Order not found");
+            return null;
+        }  catch (Exception e) {
             //TODO: actually throw an error here
             e.printStackTrace();
             return null;
