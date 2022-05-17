@@ -42,6 +42,7 @@ public class OrderService {
             return OrderInformation.getFrontendData(order);
         } catch (Exception e) {
             //TODO: actually throw an error here
+            e.printStackTrace();
             return null;
         }
     }
@@ -66,10 +67,44 @@ public class OrderService {
             return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
+            e.printStackTrace();
             return null;
         }
     }
 
+    /**
+     * Cancels an order by order and user ID's
+     * 
+     * @param userId The id of the user whos order is to be canceled.
+     * @param orderId The id of the order to cancel.
+     * @return The canceled order.
+     */
+    public OrderInformation cancelOrder(Integer userId, Integer orderId) {
+        try {
+            Order orderToCancel = orderRepo.getById(orderId);
+            if(orderToCancel.getCustomer().getId() != userId) {
+                //TODO: actually throw an error here
+                return null;
+            }
+            orderToCancel.setOrderStatus("canceled");
+
+            //TODO: Send confirmation to user email/phone that order has been canceled.
+
+            return OrderInformation.getFrontendData(orderRepo.save(orderToCancel));
+        } catch (Exception e) {
+            //TODO: actually throw an error here
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Deletes order by order and user ID's
+     * 
+     * @param userId The id of the user whos order is to be deleted.
+     * @param orderId The id of the order to delete.
+     * @return If the order was successfully canceled or not.
+     */
     public Boolean deleteOrder(Integer userId, Integer orderId) {
         try {
             Order orderToDelete = orderRepo.getById(orderId);
@@ -79,7 +114,8 @@ public class OrderService {
             }
             return false;
         } catch (Exception e) {
-            //TODO: handle exception
+            //TODO: actually throw an error here
+            e.printStackTrace();
             return false;
         }
     }
@@ -91,14 +127,14 @@ public class OrderService {
      * @return A list of Order objects representing all of the given users orders.
      */
     private List<Order> getUserOrders(Integer userId) {
-        User user;
-        List<Order> orders;
         try {
-            user = userRepo.getById(userId);
-            orders = orderRepo.findAllByCustomer(user);
+            User user = userRepo.getById(userId);
+            List<Order> orders = orderRepo.findAllByCustomer(user);
+            return orders;
         } catch (Exception e) {
+            //TODO: actually throw an error here
+            e.printStackTrace();
             return null;
         }
-        return orders;
     }
 }

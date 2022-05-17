@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,8 +30,14 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
     }
 
+    @PutMapping(value = "ufd/order-service/{userId}/orders/{orderId}")
+    public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
+    }
+
     @DeleteMapping(value = "ufd/order-service/{userId}/orders/{orderId}")
     public ResponseEntity<Boolean> deleteOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.deleteOrder(userId, orderId));
     }
+
 }
