@@ -2,14 +2,22 @@ package com.smoothstack.ordermicroservice.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
 
+import com.smoothstack.common.models.Discount;
 import com.smoothstack.common.models.Order;
+import com.smoothstack.common.models.OrderItem;
+import com.smoothstack.common.models.Restaurant;
 import com.smoothstack.common.models.User;
+import com.smoothstack.common.repositories.DiscountRepository;
+import com.smoothstack.common.repositories.MenuItemRepository;
 import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
+import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +34,15 @@ public class OrderService {
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    RestaurantRepository restaurantRepo;
+
+    @Autowired
+    DiscountRepository discountRepo;
+
+    @Autowired
+    MenuItemRepository menuItemRepo;
     
     /**
      * Finds a single order by order ID.
@@ -75,6 +92,33 @@ public class OrderService {
             return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Updates an order.
+     * 
+     * @param userId The id of the user whos order is to be updated.
+     * @param orderId The id of the order to be updated.
+     * @param orderUpdates The updates to be made.
+     * @return The front end info for the updated Order.
+     */
+    public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) {
+        try {
+            Order orderToUpdate = orderRepo.getById(orderId);
+            if(orderToUpdate.getOrderStatus() == "placed" && orderToUpdate.getCustomer().getId() == userId) {
+                Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate);
+                return OrderInformation.getFrontendData(orderRepo.save(updatedOrder));
+            }
+            //TODO: actually throw an error here
+            return null;
+        } catch (EntityNotFoundException e) {
+            System.out.println("Order not found.");
+            return null;
+        } catch (Exception e) {
+            //TODO: handle exception
             e.printStackTrace();
             return null;
         }
@@ -153,5 +197,78 @@ public class OrderService {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) {
+        if(newOrder.getRestaurantNotes() != null) {
+            orderToUpdate.setRestaurantNotes(newOrder.getRestaurantNotes());
+        }
+        if(newOrder.getDriverNotes() != null) {
+            orderToUpdate.setDriverNotes(newOrder.getDriverNotes());
+        }
+        if(newOrder.getSubTotal() != null) {
+            orderToUpdate.setSubTotal(newOrder.getSubTotal());
+        }
+        if(newOrder.getDeliveryFee() != null) {
+            orderToUpdate.setDeliveryFee(newOrder.getDeliveryFee());
+        }
+        if(newOrder.getTax() != null) {
+            orderToUpdate.setTax(newOrder.getTax());
+        }
+        if(newOrder.getTip() != null) {
+            orderToUpdate.setTip(newOrder.getTip());
+        }
+        if(newOrder.getTotal() != null) {
+            orderToUpdate.setTotal(newOrder.getTotal());;
+        }
+        if(newOrder.getNetLoyalty() != null) {
+            orderToUpdate.setNetLoyalty(newOrder.getNetLoyalty());;
+        }
+        
+        try {
+            if(newOrder.getRestaurantIds() != null) {
+                List<Restaurant> newRestaurantList = newOrder.getRestaurantIds().stream()
+                .map(id -> restaurantRepo.getById(id))
+                .collect(Collectors.toList());
+                orderToUpdate.setRestaurants(newRestaurantList);
+            }
+        } catch (Exception e) {
+            //TODO: Throw Restaurant not found exception
+            e.printStackTrace();
+        }
+
+        try {
+            if(newOrder.getDiscountIds() != null) {
+                List<Discount> newDiscountsList = newOrder.getDiscountIds().stream()
+                .map(id -> discountRepo.getById(id))
+                .collect(Collectors.toList());
+                orderToUpdate.setDiscounts(newDiscountsList);
+            }
+        } catch (Exception e) {
+            //TODO: Throw Discount not found exception
+            e.printStackTrace();
+        }
+        
+        try {
+            if(newOrder.getItems() != null) {
+                List<OrderItem> newOrderItemsList = newOrder.getItems().stream()
+                .map(orderItemInfo -> {
+                    OrderItem item = new OrderItem();
+                    item.setMenuItems(menuItemRepo.getById(orderItemInfo.getMenuItemId()));
+                    item.setNotes(orderItemInfo.getNotes());
+                    //TODO: actually figure out how to set discount properly
+                    item.setDiscount(0.0d);
+                    item.setPrice(orderItemInfo.getPrice());
+                    return item;
+                })
+                .collect(Collectors.toList());
+                orderToUpdate.setOrderItems(newOrderItemsList);
+            }
+        } catch (Exception e) {
+            //TODO: Throw Menu-Item not found exception
+            e.printStackTrace();
+        }
+
+        return orderToUpdate;
     }
 }

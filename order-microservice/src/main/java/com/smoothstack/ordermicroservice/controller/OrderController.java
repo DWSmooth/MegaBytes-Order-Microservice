@@ -2,6 +2,7 @@ package com.smoothstack.ordermicroservice.controller;
 
 import java.util.List;
 
+import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.service.OrderService;
 
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,7 +36,17 @@ public class OrderController {
     }
 
     @PutMapping(value = "/{userId}/orders/{orderId}")
-    public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
+    public ResponseEntity<OrderInformation> updateOrder(
+        @PathVariable Integer userId, 
+        @PathVariable Integer orderId, 
+        @RequestHeader("update") Boolean update,
+        @RequestBody NewOrder updatedOrder
+        ) {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.updateOrder(userId, orderId, updatedOrder));
+    }
+
+    @PutMapping(value = "/{userId}/orders/{orderId}")
+    public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId, @RequestHeader("cancel") Boolean cancel) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
     }
 
