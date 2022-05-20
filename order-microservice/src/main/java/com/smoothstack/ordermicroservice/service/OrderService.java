@@ -2,9 +2,11 @@ package com.smoothstack.ordermicroservice.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 
 import com.smoothstack.common.models.Discount;
 import com.smoothstack.common.models.Order;
@@ -17,6 +19,8 @@ import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.common.services.CommonLibraryTestingService;
+import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 
@@ -43,6 +47,9 @@ public class OrderService {
 
     @Autowired
     MenuItemRepository menuItemRepo;
+
+    @Autowired
+    CommonLibraryTestingService testingService;
     
     /**
      * Finds a single order by order ID.
@@ -51,19 +58,25 @@ public class OrderService {
      * @param orderId
      * @return
      */
+    @Transactional
     public OrderInformation getOrderDetails(Integer userId, Integer orderId) {
         try {
-            Order order  = orderRepo.getById(orderId);
-            if (order.getCustomer().getId() != userId) {
-                //TODO: actually throw an error here
-                return null;
+            //testingService.createTestData();
+            Optional<Order> order  = orderRepo.findById(orderId);
+            if (order.isPresent()) {
+                if (order.get().getCustomer().getId() != userId) {
+                    //TODO: actually throw an error here
+                    System.out.println("User id does not match!");
+                    return null;
+                }
+                return createFrontEndData(order.get().getId());
             }
-            return OrderInformation.getFrontendData(order);
-        } catch (EntityNotFoundException e) {
+            //TODO: actually throw an error here
             System.out.println("Order not found");
             return null;
         } catch (Exception e) {
             //TODO: actually throw an error here
+            System.out.println("Misc Error");
             e.printStackTrace();
             return null;
         }
@@ -75,13 +88,14 @@ public class OrderService {
      * @param userId The id of the user whos orders are to be retrieved.
      * @return A list of OrderInformation objects, wrapped in a Response entity.
      */
+    @Transactional
     public List<OrderInformation> getOrderHistory(Integer userId) {
         try {
             List<OrderInformation> processedOrders = new ArrayList<>();
             List<Order> orders = getUserOrders(userId);
             if (orders != null && orders.size() > 0) {
                 for (Order o: orders) {
-                    processedOrders.add(OrderInformation.getFrontendData(o));
+                    processedOrders.add(createFrontEndData(o.getId()));
                 }
                 return processedOrders;
             }
@@ -105,12 +119,13 @@ public class OrderService {
      * @param orderUpdates The updates to be made.
      * @return The front end info for the updated Order.
      */
+    @Transactional
     public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) {
         try {
             Order orderToUpdate = orderRepo.getById(orderId);
             if(orderToUpdate.getOrderStatus() == "placed" && orderToUpdate.getCustomer().getId() == userId) {
                 Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate);
-                return OrderInformation.getFrontendData(orderRepo.save(updatedOrder));
+                return createFrontEndData(orderRepo.save(updatedOrder).getId());
             }
             //TODO: actually throw an error here
             return null;
@@ -131,6 +146,7 @@ public class OrderService {
      * @param orderId The id of the order to cancel.
      * @return The canceled order.
      */
+    @Transactional
     public OrderInformation cancelOrder(Integer userId, Integer orderId) {
         try {
             Order orderToCancel = orderRepo.getById(orderId);
@@ -142,7 +158,7 @@ public class OrderService {
 
             //TODO: Send confirmation to user email/phone that order has been canceled.
 
-            return OrderInformation.getFrontendData(orderRepo.save(orderToCancel));
+            return createFrontEndData(orderRepo.save(orderToCancel).getId());
         } catch (EntityNotFoundException e) {
             System.out.println("Order to be canceled not found");
             return null;
@@ -160,6 +176,7 @@ public class OrderService {
      * @param orderId The id of the order to delete.
      * @return If the order was successfully canceled or not.
      */
+    @Transactional
     public Boolean deleteOrder(Integer userId, Integer orderId) {
         try {
             Order orderToDelete = orderRepo.getById(orderId);
@@ -184,11 +201,16 @@ public class OrderService {
      * @param userId The id of the user whos orders are being found.
      * @return A list of Order objects representing all of the given users orders.
      */
+    @Transactional
     private List<Order> getUserOrders(Integer userId) {
         try {
-            User user = userRepo.getById(userId);
-            List<Order> orders = orderRepo.findAllByCustomer(user);
-            return orders;
+            Optional<User> user = userRepo.findById(userId);
+            if (user.isPresent()) {
+                List<Order> orders = orderRepo.findAllByCustomer(user.get());
+                return orders;
+            }
+            System.out.println("User not found");
+            return null;
         } catch (EntityNotFoundException e) {
             System.out.println("Order not found");
             return null;
@@ -199,6 +221,8 @@ public class OrderService {
         }
     }
 
+
+    @Transactional
     private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) {
         if(newOrder.getRestaurantNotes() != null) {
             orderToUpdate.setRestaurantNotes(newOrder.getRestaurantNotes());
@@ -270,5 +294,92 @@ public class OrderService {
         }
 
         return orderToUpdate;
+    }
+
+    /**
+     * Processes an order object into an OrderInformation Object without sensitive information.
+     * 
+     * @param order The order to process.
+     * @return The processed order as an Order Information object.
+     */
+    @Transactional
+    public OrderInformation createFrontEndData(Integer orderId) {
+
+        Optional<Order> orderOptional = orderRepo.findById(orderId);
+        if (!orderOptional.isPresent()) {
+            System.out.println("Order not found!");
+            return null;
+        }
+        Order order = orderOptional.get();
+        OrderInformation info = new OrderInformation();
+
+        if (order.getId() != null) {
+            info.setOrderId(order.getId());
+        }
+        if (order.getOrderStatus() != null) {
+            info.setOrderStatus(order.getOrderStatus());
+        }
+        if (order.getRestaurantNotes() != null) {
+            info.setRestaurantNotes(order.getRestaurantNotes());
+        }
+        if (order.getDriverNotes() != null) {
+            info.setDriverNotes(order.getDriverNotes());
+        }
+        if (order.getSubTotal() != null) {
+            info.setSubTotal(order.getSubTotal());
+        }
+        if (order.getDeliveryFee() != null) {
+            info.setDeliveryFee(order.getDeliveryFee());
+        }
+        if (order.getTax() != null) {
+            info.setTax(order.getTax());
+        }
+        if (order.getTip() != null) {
+            info.setTip(order.getTip());
+        }
+        if (order.getTotal() != null) {
+            info.setTotal(order.getTotal());
+        }
+        if (order.getTimeCreated() != null) {
+            info.setTimeCreated(order.getTimeCreated());
+        }
+        if (order.getScheduledFor() != null) {
+            info.setScheduledFor(order.getScheduledFor());
+        }
+        if (order.getNetLoyalty() != null) {
+            info.setNetLoyalty(order.getNetLoyalty());
+        }
+        if (order.getDriver().getUserInformation().getFirstName() != null) {
+            info.setDriverFirstName(order.getDriver().getUserInformation().getFirstName());
+        }
+        if (order.getRestaurants() != null) {
+            info.setRestaurantNames(
+                order.getRestaurants().stream()
+                .map(r -> r.getName())
+                .collect(Collectors.toList())
+            );
+        }
+        if (order.getDiscounts() != null) {
+            info.setDiscounts(order.getDiscounts());
+        }
+        if (order.getOrderItems() != null) {
+            info.setItems(
+                order.getOrderItems().stream()
+                .map(o -> {
+                    FrontEndOrderItem item = new FrontEndOrderItem();
+                    item.setId(o.getId());
+                    item.setName(o.getMenuItems().getName());
+                    item.setDescription(o.getMenuItems().getDescription());
+                    item.setNotes(o.getNotes());
+                    item.setDiscount(o.getDiscount());
+                    item.setPrice(o.getPrice());
+                    return item;
+                })
+                .collect(Collectors.toList())
+            );
+        }
+
+        return info;
+
     }
 }

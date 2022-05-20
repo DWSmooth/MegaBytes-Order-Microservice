@@ -1,10 +1,6 @@
 package com.smoothstack.ordermicroservice.data;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import com.smoothstack.common.models.Order;
-import com.smoothstack.common.models.Restaurant;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

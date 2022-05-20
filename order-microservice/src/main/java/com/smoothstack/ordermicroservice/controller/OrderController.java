@@ -35,7 +35,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
     }
 
-    @PutMapping(value = "/{userId}/orders/{orderId}")
+    @PutMapping(value = "/{userId}/orders/{orderId}/update")
     public ResponseEntity<OrderInformation> updateOrder(
         @PathVariable Integer userId, 
         @PathVariable Integer orderId, 
@@ -45,14 +45,13 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.updateOrder(userId, orderId, updatedOrder));
     }
 
-    @PutMapping(value = "/{userId}/orders/{orderId}")
+    @PutMapping(value = "/{userId}/orders/{orderId}/cancel")
     public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId, @RequestHeader("cancel") Boolean cancel) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
     }
 
-    @DeleteMapping(value = "/{userId}/orders/{orderId}")
+    @DeleteMapping(value = "/{userId}/orders/{orderId}/delete")
     public ResponseEntity<Boolean> deleteOrder(@PathVariable Integer userId, @PathVariable Integer orderId) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.deleteOrder(userId, orderId));
     }
-
 }
