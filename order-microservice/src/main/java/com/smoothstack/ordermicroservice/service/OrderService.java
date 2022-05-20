@@ -22,6 +22,11 @@ import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
+import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
+import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
+import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
+import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
+import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -55,27 +60,15 @@ public class OrderService {
      * @return
      */
     @Transactional
-    public OrderInformation getOrderDetails(Integer userId, Integer orderId) {
-        try {
-            Optional<Order> order  = orderRepo.findById(orderId);
-            if (order.isPresent()) {
-                if (order.get().getCustomer().getId() != userId) {
-                    //TODO: actually throw an error here
-                    System.out.println("User id does not match!");
-                    return null;
-                }
-                return createFrontEndData(order.get().getId());
+    public OrderInformation getOrderDetails(Integer userId, Integer orderId) throws OrderNotFoundException, UserMismatchException {
+        Optional<Order> order  = orderRepo.findById(orderId);
+        if (order.isPresent()) {
+            if (order.get().getCustomer().getId() != userId) {
+                throw new UserMismatchException("User id provided does not match order requested.");
             }
-            //TODO: actually throw an error here
-            System.out.println("Hello");
-            System.out.println("Order not found");
-            return null;
-        } catch (Exception e) {
-            //TODO: actually throw an error here
-            System.out.println("Misc Error");
-            e.printStackTrace();
-            return null;
+            return createFrontEndData(order.get().getId());
         }
+        throw new OrderNotFoundException("No order with ID: " + orderId + " exists.");
     }
 
     /**
@@ -85,26 +78,22 @@ public class OrderService {
      * @return A list of OrderInformation objects, wrapped in a Response entity.
      */
     @Transactional
-    public List<OrderInformation> getOrderHistory(Integer userId) {
+    public List<OrderInformation> getOrderHistory(Integer userId) throws UserNotFoundException {
+        List<OrderInformation> processedOrders = new ArrayList<>();
+        List<Order> orders = new ArrayList<>();
         try {
-            List<OrderInformation> processedOrders = new ArrayList<>();
-            List<Order> orders = getUserOrders(userId);
-            if (orders != null && orders.size() > 0) {
-                for (Order o: orders) {
-                    processedOrders.add(createFrontEndData(o.getId()));
-                }
-                return processedOrders;
-            }
-            //TODO: actually throw an error here
-            return null;
-        } catch (EntityNotFoundException e) {
-            System.out.println("User not found.");
-            return null;
-        } catch (Exception e) {
-            //TODO: actually throw an error here
-            e.printStackTrace();
-            return null;
+            orders = getUserOrders(userId);
+        } catch (UserNotFoundException e) {
+            throw e;
         }
+        
+        if (orders != null && orders.size() > 0) {
+            for (Order o: orders) {
+                processedOrders.add(createFrontEndData(o.getId()));
+            }
+        }
+
+        return processedOrders;
     }
 
     /**
@@ -116,79 +105,66 @@ public class OrderService {
      * @return The front end info for the updated Order.
      */
     @Transactional
-    public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) {
-        try {
-            Order orderToUpdate = orderRepo.getById(orderId);
-            if(orderToUpdate.getOrderStatus() == "placed" && orderToUpdate.getCustomer().getId() == userId) {
-                Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate);
-                return createFrontEndData(orderRepo.save(updatedOrder).getId());
+    public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) 
+    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
+        Optional<Order> orderToUpdate = orderRepo.findById(orderId);
+        if (orderToUpdate.isPresent()) {
+            if(orderToUpdate.get().getOrderStatus() == "placed") {
+                if (orderToUpdate.get().getCustomer().getId() == userId) {
+                    Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
+                    return createFrontEndData(orderRepo.save(updatedOrder).getId());
+                }
+                throw new UserMismatchException("User does not match user on order to be updated.");
             }
-            //TODO: actually throw an error here
-            return null;
-        } catch (EntityNotFoundException e) {
-            System.out.println("Order not found.");
-            return null;
-        } catch (Exception e) {
-            //TODO: handle exception
-            e.printStackTrace();
-            return null;
+            throw new OrderNotUpdateableException("Order has progressed too far to update.");
         }
+        throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be updated.");
     }
 
     /**
-     * Cancels an order by order and user ID's
+     * Cancels an order by orderId and userId.
      * 
      * @param userId The id of the user whos order is to be canceled.
      * @param orderId The id of the order to cancel.
      * @return The canceled order.
      */
     @Transactional
-    public OrderInformation cancelOrder(Integer userId, Integer orderId) {
-        try {
-            Order orderToCancel = orderRepo.getById(orderId);
-            if(orderToCancel.getCustomer().getId() != userId) {
-                //TODO: actually throw an error here
-                return null;
+    public OrderInformation cancelOrder(Integer userId, Integer orderId) throws OrderNotFoundException, OrderNotCancelableException, UserMismatchException {
+        Optional<Order> orderToCancel = orderRepo.findById(orderId);
+        if (orderToCancel.isPresent()) {
+            if(orderToCancel.get().getOrderStatus() == "placed") {
+                if(orderToCancel.get().getCustomer().getId() == userId) {
+                    orderToCancel.get().setOrderStatus("canceled");
+                
+                    //TODO: Send confirmation to user email/phone that order has been canceled.
+
+                    return createFrontEndData(orderRepo.save(orderToCancel.get()).getId());
+                }
+                throw new UserMismatchException("User does not match user on order to be canceled.");
             }
-            orderToCancel.setOrderStatus("canceled");
-
-            //TODO: Send confirmation to user email/phone that order has been canceled.
-
-            return createFrontEndData(orderRepo.save(orderToCancel).getId());
-        } catch (EntityNotFoundException e) {
-            System.out.println("Order to be canceled not found");
-            return null;
-        } catch (Exception e) {
-            //TODO: actually throw an error here
-            e.printStackTrace();
-            return null;
+            throw new OrderNotCancelableException("Order has progressed too far to cancel.");
         }
+        throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be canceled.");
     }
 
     /**
-     * Deletes order by order and user ID's
+     * Deletes order by orderId and userId.
      * 
      * @param userId The id of the user whos order is to be deleted.
      * @param orderId The id of the order to delete.
      * @return If the order was successfully canceled or not.
      */
     @Transactional
-    public Boolean deleteOrder(Integer userId, Integer orderId) {
-        try {
-            Order orderToDelete = orderRepo.getById(orderId);
-            if (orderToDelete.getCustomer().getId() != userId) {
-                orderRepo.delete(orderToDelete);
+    public Boolean deleteOrder(Integer userId, Integer orderId) throws OrderNotFoundException, UserMismatchException {
+        Optional<Order> orderToDelete = orderRepo.findById(orderId);
+        if (orderToDelete.isPresent()) {
+            if (orderToDelete.get().getCustomer().getId() != userId) {
+                orderRepo.delete(orderToDelete.get());
                 return true;
             }
-            return false;
-        } catch (EntityNotFoundException e) {
-            System.out.println("Order to be deleted not found");
-            return null;
-        } catch (Exception e) {
-            //TODO: actually throw an error here
-            e.printStackTrace();
-            return false;
+            throw new UserMismatchException("User does not match User on order to be deleted.");
         }
+        throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be deleted.");
     }
 
     /**
@@ -198,23 +174,13 @@ public class OrderService {
      * @return A list of Order objects representing all of the given users orders.
      */
     @Transactional
-    private List<Order> getUserOrders(Integer userId) {
-        try {
-            Optional<User> user = userRepo.findById(userId);
-            if (user.isPresent()) {
-                List<Order> orders = orderRepo.findAllByCustomer(user.get());
-                return orders;
-            }
-            System.out.println("User not found");
-            return null;
-        } catch (EntityNotFoundException e) {
-            System.out.println("Order not found");
-            return null;
-        }  catch (Exception e) {
-            //TODO: actually throw an error here
-            e.printStackTrace();
-            return null;
+    private List<Order> getUserOrders(Integer userId) throws UserNotFoundException {
+        Optional<User> user = userRepo.findById(userId);
+        if (user.isPresent()) {
+            List<Order> orders = orderRepo.findAllByCustomer(user.get());
+            return orders;
         }
+        throw new UserNotFoundException("User with ID: " + userId + " does not exist.");
     }
 
 

@@ -9,6 +9,8 @@ import com.smoothstack.common.repositories.UserInformationRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.common.services.CommonLibraryTestingService;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
+import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
+import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,11 +47,16 @@ public class OrderServiceTest {
     public void doesServiceGetOrderDetailsById() {
 
         User testUser = userRepo.findTopByUserName("testCustomer").get();
+        try {
+            OrderInformation orderInfo = service.getOrderDetails(testUser.getId(), 1);
+            assertEquals("Per", orderInfo.getDriverFirstName());
+            assertEquals("Dublin Bay Irish Pub & Grill", orderInfo.getRestaurantNames().get(0));
+        } catch (OrderNotFoundException | UserMismatchException e) {
+            e.printStackTrace();
+        }
         
-        OrderInformation orderInfo = service.getOrderDetails(testUser.getId(), 1);
 
-        assertEquals("Per", orderInfo.getDriverFirstName());
-        assertEquals("Dublin Bay Irish Pub & Grill", orderInfo.getRestaurantNames().get(0));
+        
         
     }
     
