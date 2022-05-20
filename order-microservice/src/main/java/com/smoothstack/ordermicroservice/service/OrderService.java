@@ -19,7 +19,6 @@ import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
-import com.smoothstack.common.services.CommonLibraryTestingService;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
@@ -47,9 +46,6 @@ public class OrderService {
 
     @Autowired
     MenuItemRepository menuItemRepo;
-
-    @Autowired
-    CommonLibraryTestingService testingService;
     
     /**
      * Finds a single order by order ID.
@@ -61,7 +57,6 @@ public class OrderService {
     @Transactional
     public OrderInformation getOrderDetails(Integer userId, Integer orderId) {
         try {
-            //testingService.createTestData();
             Optional<Order> order  = orderRepo.findById(orderId);
             if (order.isPresent()) {
                 if (order.get().getCustomer().getId() != userId) {
@@ -72,6 +67,7 @@ public class OrderService {
                 return createFrontEndData(order.get().getId());
             }
             //TODO: actually throw an error here
+            System.out.println("Hello");
             System.out.println("Order not found");
             return null;
         } catch (Exception e) {
@@ -363,6 +359,7 @@ public class OrderService {
             info.setDiscounts(order.getDiscounts());
         }
         if (order.getOrderItems() != null) {
+            System.out.println("Items size is: " + order.getOrderItems().size());
             info.setItems(
                 order.getOrderItems().stream()
                 .map(o -> {
