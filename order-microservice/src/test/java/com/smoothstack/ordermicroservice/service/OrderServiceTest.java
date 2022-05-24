@@ -7,16 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
+import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.User;
+import com.smoothstack.common.repositories.MenuItemRepository;
 import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.UserInformationRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.common.services.CommonLibraryTestingService;
+import com.smoothstack.ordermicroservice.data.NewOrder;
+import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
+import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
 import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
 import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 
@@ -50,6 +56,9 @@ public class OrderServiceTest {
 
     @Autowired
     OrderItemRepository orderItemRepo;
+
+    @Autowired
+    MenuItemRepository menuItemRepo;
 
     @BeforeEach
     public void setUpTestEnvironment() {
@@ -247,8 +256,131 @@ public class OrderServiceTest {
     // Test updateOrder
 
     @Test
+    @DirtiesContext
     public void doesServiceUpdateOrder() {
-        
+        User testUser = userRepo.findTopByUserName("testCustomer").get();
+        boolean threwException = false;
+
+        NewOrder info = new NewOrder();
+        info.setDriverNotes("New driver notes!");
+
+        List<NewOrderItem> items = new ArrayList<>();
+        List<Integer> emptyList = new ArrayList<>();
+
+        MenuItem orderItem1 = menuItemRepo.findTopByName("Guinness BBQ Burger").get();
+        NewOrderItem item1 = new NewOrderItem(orderItem1.getId(), "", 0.00d, orderItem1.getPrice(), emptyList);
+        items.add(item1);
+
+        MenuItem orderItem2 = menuItemRepo.findTopByName("Corned Beef & Cabbage").get();
+        NewOrderItem item2 = new NewOrderItem(orderItem2.getId(), "", 0.00d, orderItem2.getPrice(), emptyList);
+        items.add(item2);
+
+        info.setItems(items);
+
+        Order orderToUpdate = orderRepo.findById(1).get();
+        orderToUpdate.setOrderStatus("placed");
+        orderRepo.save(orderToUpdate);
+
+        OrderInformation updatedOrder  = new OrderInformation();
+
+        try {
+            updatedOrder = service.updateOrder(testUser.getId(), 1, info);
+        } catch (Exception e) {
+            e.printStackTrace();
+            threwException = true;
+        }
+
+        assertFalse(threwException);
+        assertEquals("New driver notes!", updatedOrder.getDriverNotes());
+        assertEquals("Guinness BBQ Burger", updatedOrder.getItems().get(0).getName());
+        assertEquals("Corned Beef & Cabbage", updatedOrder.getItems().get(1).getName());
     }
-    
+
+    @Test
+    @DirtiesContext
+    public void doesUpdateOrderThrowOrderNotFound() {
+
+        User testUser = userRepo.findTopByUserName("testCustomer").get();
+        boolean threwOrderNotFound = false;
+        boolean threwOrderNotUpdateable = false;
+        boolean threwUserMismatch = false;
+
+        NewOrder updates = new NewOrder();
+        
+        try {
+            service.updateOrder(testUser.getId(), 100, updates);
+        } catch (OrderNotFoundException e) {
+            threwOrderNotFound = true;
+        } catch (OrderNotUpdateableException e) {
+            threwOrderNotUpdateable = true;
+        } catch (UserMismatchException e) {
+            threwUserMismatch = true;
+        }
+
+        assertTrue(threwOrderNotFound);
+        assertFalse(threwOrderNotUpdateable);
+        assertFalse(threwUserMismatch);
+
+    }
+
+    @Test
+    @DirtiesContext
+    public void doesUpdateOrderThrowOrderNotUpdateable() {
+
+        User testUser = userRepo.findTopByUserName("testCustomer").get();
+        boolean threwOrderNotFound = false;
+        boolean threwOrderNotUpdateable = false;
+        boolean threwUserMismatch = false;
+
+        NewOrder updates = new NewOrder();
+        
+        try {
+            System.out.println(orderRepo.findById(1).get().getOrderStatus());
+            service.updateOrder(testUser.getId(), 1, updates);
+        } catch (OrderNotFoundException e) {
+            threwOrderNotFound = true;
+        } catch (OrderNotUpdateableException e) {
+            threwOrderNotUpdateable = true;
+        } catch (UserMismatchException e) {
+            threwUserMismatch = true;
+        }
+
+        assertFalse(threwOrderNotFound);
+        assertTrue(threwOrderNotUpdateable);
+        assertFalse(threwUserMismatch);
+
+    }
+
+    @Test
+    @DirtiesContext
+    public void doesUpdateOrderThrowUserMismatch() {
+
+        User testUser = userRepo.findTopByUserName("testDriver").get();
+        boolean threwOrderNotFound = false;
+        boolean threwOrderNotUpdateable = false;
+        boolean threwUserMismatch = false;
+
+        Order orderToUpdate = orderRepo.findById(1).get();
+        orderToUpdate.setOrderStatus("placed");
+        orderRepo.save(orderToUpdate);
+
+        NewOrder updates = new NewOrder();
+        
+        try {
+            service.updateOrder(testUser.getId(), 1, updates);
+        } catch (OrderNotFoundException e) {
+            threwOrderNotFound = true;
+        } catch (OrderNotUpdateableException e) {
+            threwOrderNotUpdateable = true;
+        } catch (UserMismatchException e) {
+            threwUserMismatch = true;
+        }
+
+        assertFalse(threwOrderNotFound);
+        assertFalse(threwOrderNotUpdateable);
+        assertTrue(threwUserMismatch);
+
+    }
+
+
 }
