@@ -63,10 +63,10 @@ public class OrderService {
     public OrderInformation getOrderDetails(Integer userId, Integer orderId) throws OrderNotFoundException, UserMismatchException {
         Optional<Order> order  = orderRepo.findById(orderId);
         if (order.isPresent()) {
-            if (order.get().getCustomer().getId() != userId) {
-                throw new UserMismatchException("User id provided does not match order requested.");
+            if (order.get().getCustomer().getId() == userId) {
+                return createFrontEndData(order.get().getId());
             }
-            return createFrontEndData(order.get().getId());
+            throw new UserMismatchException("User ID provided does not match order requested.");
         }
         throw new OrderNotFoundException("No order with ID: " + orderId + " exists.");
     }
@@ -325,7 +325,6 @@ public class OrderService {
             info.setDiscounts(order.getDiscounts());
         }
         if (order.getOrderItems() != null) {
-            System.out.println("Items size is: " + order.getOrderItems().size());
             info.setItems(
                 order.getOrderItems().stream()
                 .map(o -> {
