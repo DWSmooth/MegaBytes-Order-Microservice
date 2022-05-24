@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
-import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.User;
 import com.smoothstack.common.repositories.MenuItemRepository;
 import com.smoothstack.common.repositories.OrderItemRepository;
@@ -29,14 +28,10 @@ import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 
 @SpringBootTest
-//@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
-//@AutoConfigureTestDatabase
 public class OrderServiceTest {
 
     @Autowired
