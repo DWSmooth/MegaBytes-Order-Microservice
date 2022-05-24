@@ -78,15 +78,15 @@ public class OrderController {
     }
 
     @ExceptionHandler(OrderNotCancelableException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> orderNotCancelableException(Throwable err) {
-        return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(err.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(OrderNotUpdateableException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> orderNotUpdateableException(Throwable err) {
-        return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(err.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UserMismatchException.class)

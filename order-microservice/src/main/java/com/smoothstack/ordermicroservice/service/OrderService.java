@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
 import com.smoothstack.common.models.Discount;
@@ -183,7 +182,12 @@ public class OrderService {
         throw new UserNotFoundException("User with ID: " + userId + " does not exist.");
     }
 
-
+    /**
+     * 
+     * @param newOrder
+     * @param orderToUpdate
+     * @return
+     */
     @Transactional
     private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) {
         if(newOrder.getRestaurantNotes() != null) {
