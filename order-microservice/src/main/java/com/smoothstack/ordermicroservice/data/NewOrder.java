@@ -1,25 +1,16 @@
 package com.smoothstack.ordermicroservice.data;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import com.smoothstack.common.models.Discount;
-
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class OrderInformation {
-
-    private Integer orderId;
-
-    private String orderStatus;
-
+public class NewOrder {
+    
     private String restaurantNotes;
 
     private String driverNotes;
@@ -34,18 +25,12 @@ public class OrderInformation {
 
     private Double total;
 
-    private LocalDateTime timeCreated;
-
-    private LocalDateTime scheduledFor;
-
     private Integer netLoyalty;
 
-    private String driverFirstName;
+    private List<Integer> restaurantIds;
 
-    private List<String> restaurantNames;
+    private List<Integer> discountIds;
 
-    private List<Discount> discounts;
+    private List<NewOrderItem> items;
 
-    private List<FrontEndOrderItem> items;
-    
 }
