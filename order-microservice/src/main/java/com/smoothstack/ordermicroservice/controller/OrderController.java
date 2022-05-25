@@ -46,7 +46,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
     }
 
-    @PutMapping(value = "/{userId}/orders/{orderId}/update")
+    @PutMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<OrderInformation> updateOrder(
         @PathVariable Integer userId, 
         @PathVariable Integer orderId, 
@@ -63,7 +63,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
     }
 
-    @DeleteMapping(value = "/{userId}/orders/{orderId}/delete")
+    @DeleteMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<Boolean> deleteOrder(@PathVariable Integer userId, @PathVariable Integer orderId)
     throws OrderNotFoundException, UserMismatchException {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.deleteOrder(userId, orderId));
