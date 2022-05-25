@@ -52,6 +52,19 @@ public class OrderService {
     MenuItemRepository menuItemRepo;
     
     /**
+     * Creates a new order.
+     * 
+     * @param newOrder
+     * @return
+     */
+    @Transactional
+    public OrderInformation createOrder(NewOrder newOrder) {
+        Order orderToCreate = new Order();
+        orderToCreate = applyDataToOrder(newOrder, orderToCreate);
+        return createFrontEndData(orderRepo.save(orderToCreate).getId());
+    }
+    
+    /**
      * Finds a single order by order ID.
      * 
      * @param userId
