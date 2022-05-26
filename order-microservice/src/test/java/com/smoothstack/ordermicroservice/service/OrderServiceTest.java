@@ -488,6 +488,7 @@ public class OrderServiceTest {
     @Test
     public void doesCreateOrderThrowNoAvailableDriver() {
         boolean threwNoDriverAvailable = false;
+        
         driverRepo.deleteAll();
 
         NewOrder order = new NewOrder();
