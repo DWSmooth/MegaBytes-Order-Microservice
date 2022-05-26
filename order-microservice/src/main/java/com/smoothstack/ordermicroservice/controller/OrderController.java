@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
+import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -33,6 +35,12 @@ public class OrderController {
     OrderService orderService;
 
     // CRUD Mappings
+
+    @PostMapping(value = "{userId}/order")
+    public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder) 
+    throws NoAvailableDriversException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder));
+    }
 
     @GetMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<OrderInformation> getOrderDetails(@PathVariable Integer userId, @PathVariable Integer orderId) 
@@ -53,7 +61,7 @@ public class OrderController {
         @RequestHeader("update") Boolean update,
         @RequestBody NewOrder updatedOrder
         )
-    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
+    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.updateOrder(userId, orderId, updatedOrder));
     }
 
@@ -98,6 +106,12 @@ public class OrderController {
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> userNotFoundException(Throwable err) {
+        return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoAvailableDriversException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> noAvailableDriversException(Throwable err) {
         return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
     }
 }
