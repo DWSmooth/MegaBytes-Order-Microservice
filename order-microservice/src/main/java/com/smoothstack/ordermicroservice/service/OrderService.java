@@ -7,20 +7,22 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import com.smoothstack.common.models.ActiveDriver;
 import com.smoothstack.common.models.Discount;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.Restaurant;
 import com.smoothstack.common.models.User;
+import com.smoothstack.common.repositories.ActiveDriverRepository;
 import com.smoothstack.common.repositories.DiscountRepository;
 import com.smoothstack.common.repositories.MenuItemRepository;
-import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
+import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
@@ -34,33 +36,37 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
     @Autowired
-    OrderRepository orderRepo;
+    private ActiveDriverRepository driverRepo;
 
     @Autowired
-    OrderItemRepository itemRepo;
+    private OrderRepository orderRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    RestaurantRepository restaurantRepo;
+    private RestaurantRepository restaurantRepo;
 
     @Autowired
-    DiscountRepository discountRepo;
+    private DiscountRepository discountRepo;
 
     @Autowired
-    MenuItemRepository menuItemRepo;
+    private MenuItemRepository menuItemRepo;
     
     /**
      * Creates a new order.
      * 
-     * @param newOrder
-     * @return
+     * @param newOrder The NewOrder object containing the information for the order.
+     * @return The front end data for the newly created order.
      */
     @Transactional
-    public OrderInformation createOrder(NewOrder newOrder) {
+    public OrderInformation createOrder(NewOrder newOrder) throws NoAvailableDriversException {
         Order orderToCreate = new Order();
-        orderToCreate = applyDataToOrder(newOrder, orderToCreate);
+        try {
+            orderToCreate = applyDataToOrder(newOrder, orderToCreate);
+        } catch (NoAvailableDriversException e) {
+            throw e;
+        }
         return createFrontEndData(orderRepo.save(orderToCreate).getId());
     }
     
@@ -118,13 +124,17 @@ public class OrderService {
      */
     @Transactional
     public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) 
-    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
+    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
         Optional<Order> orderToUpdate = orderRepo.findById(orderId);
         if (orderToUpdate.isPresent()) {
             if(orderToUpdate.get().getOrderStatus() == "placed") {
                 if (orderToUpdate.get().getCustomer().getId() == userId) {
-                    Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
-                    return createFrontEndData(orderRepo.save(updatedOrder).getId());
+                    try {
+                        Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
+                        return createFrontEndData(orderRepo.save(updatedOrder).getId());
+                    } catch (NoAvailableDriversException e) {
+                        throw e;
+                    }
                 }
                 throw new UserMismatchException("User does not match user on order to be updated.");
             }
@@ -196,13 +206,26 @@ public class OrderService {
     }
 
     /**
+     * Takes a NewOrder object, and applies the data in it to an Order object.
      * 
-     * @param newOrder
-     * @param orderToUpdate
-     * @return
+     * @param newOrder The object containing the data.
+     * @param orderToUpdate The object to recieve the data.
+     * @return The updated order object.
      */
     @Transactional
-    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) {
+    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) throws NoAvailableDriversException {
+        if(orderToUpdate.getDriver() == null) {
+            //TODO: Find driver closest to restaurant, need to figure out location services
+            List<ActiveDriver> drivers = driverRepo.findAll();
+            if(drivers.size() > 0) {
+                ActiveDriver driver = drivers.get(0);
+                orderToUpdate.setDriver(driver.getUsers());
+                driverRepo.deleteById(driver.getId());
+            } else {
+                throw new NoAvailableDriversException("No drivers availible at this time, try again later.");
+            }
+        }
+
         if(newOrder.getRestaurantNotes() != null) {
             orderToUpdate.setRestaurantNotes(newOrder.getRestaurantNotes());
         }

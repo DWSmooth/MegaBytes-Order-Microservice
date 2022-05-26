@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
+import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
@@ -36,7 +37,8 @@ public class OrderController {
     // CRUD Mappings
 
     @PostMapping(value = "{userId}/order")
-    public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder) {
+    public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder) 
+    throws NoAvailableDriversException {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder));
     }
 
@@ -59,7 +61,7 @@ public class OrderController {
         @RequestHeader("update") Boolean update,
         @RequestBody NewOrder updatedOrder
         )
-    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
+    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.updateOrder(userId, orderId, updatedOrder));
     }
 
@@ -104,6 +106,12 @@ public class OrderController {
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> userNotFoundException(Throwable err) {
+        return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoAvailableDriversException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> noAvailableDriversException(Throwable err) {
         return new ResponseEntity<>(err.getMessage(), HttpStatus.NOT_FOUND);
     }
 }
