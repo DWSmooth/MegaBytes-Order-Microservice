@@ -52,7 +52,7 @@ public class OrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepo;
-    
+
     /**
      * Creates a new order.
      * 
