@@ -34,9 +34,11 @@ public class OrderController {
 
     // CRUD Mappings
 
-    @PostMapping(value = "{userId}/order")
+    @PostMapping(value = "/{userId}/order")
     public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder) 
     throws NoAvailableDriversException {
+        System.out.println("Got POST request.");
+        System.out.println(newOrder.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder));
     }
 

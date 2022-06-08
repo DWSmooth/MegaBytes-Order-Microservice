@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 
 import com.smoothstack.common.models.ActiveDriver;
 import com.smoothstack.common.models.Discount;
+import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.Restaurant;
@@ -21,6 +22,7 @@ import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
+import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
@@ -226,6 +228,10 @@ public class OrderService {
             }
         }
 
+        if (orderToUpdate.getOrderStatus() == null) {
+            orderToUpdate.setOrderStatus("Placed");
+        }
+
         if(newOrder.getRestaurantNotes() != null) {
             orderToUpdate.setRestaurantNotes(newOrder.getRestaurantNotes());
         }
@@ -280,6 +286,7 @@ public class OrderService {
                 List<OrderItem> newOrderItemsList = newOrder.getItems().stream()
                 .map(orderItemInfo -> {
                     OrderItem item = new OrderItem();
+                    item.setOrder(orderToUpdate);
                     item.setMenuItems(menuItemRepo.getById(orderItemInfo.getMenuItemId()));
                     item.setNotes(orderItemInfo.getNotes());
                     //TODO: actually figure out how to set discount properly
@@ -296,6 +303,27 @@ public class OrderService {
         }
 
         return orderToUpdate;
+    }
+
+    private OrderItem applyDataToOrderItem(NewOrderItem itemData) {
+        OrderItem item = new OrderItem();
+        if (itemData.getPrice() != null) {
+            item.setPrice(itemData.getPrice());
+        }
+        if (itemData.getDiscount() != null) {
+            item.setDiscount(itemData.getDiscount());
+        }
+        if (itemData.getMenuItemId() != null) {
+            Optional<MenuItem> menuItem = menuItemRepo.findById(itemData.getMenuItemId());
+            if (menuItem.isPresent()) {
+                item.setMenuItems(menuItem.get());
+            }
+            //TODO: Throw menu item not found exception
+        }
+        if (itemData.getNotes() != null) {
+            item.setNotes(itemData.getNotes());
+        }
+        return item;
     }
 
     /**

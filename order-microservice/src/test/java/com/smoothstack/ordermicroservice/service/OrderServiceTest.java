@@ -472,7 +472,8 @@ public class OrderServiceTest {
             e.printStackTrace();
         }
         
-        System.out.println("Restaurant id in order: " + order.getRestaurantIds().get(0));
+        //System.out.println("Restaurant id in order: " + order.getRestaurantIds().get(0));
+        System.out.println("Id of Order: " + info.getOrderId());
 
         assertEquals("Noodles & Company", info.getRestaurantNames().get(0));
         assertEquals(2, info.getItems().size());
