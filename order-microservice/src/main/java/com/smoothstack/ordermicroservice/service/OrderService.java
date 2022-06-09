@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 
 import com.smoothstack.common.models.ActiveDriver;
 import com.smoothstack.common.models.Discount;
+import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.Restaurant;
@@ -21,6 +22,7 @@ import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
+import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
@@ -52,7 +54,7 @@ public class OrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepo;
-    
+
     /**
      * Creates a new order.
      * 
@@ -226,6 +228,10 @@ public class OrderService {
             }
         }
 
+        if (orderToUpdate.getOrderStatus() == null) {
+            orderToUpdate.setOrderStatus("Placed");
+        }
+
         if(newOrder.getRestaurantNotes() != null) {
             orderToUpdate.setRestaurantNotes(newOrder.getRestaurantNotes());
         }
@@ -249,6 +255,9 @@ public class OrderService {
         }
         if(newOrder.getNetLoyalty() != null) {
             orderToUpdate.setNetLoyalty(newOrder.getNetLoyalty());;
+        }
+        if(newOrder.getTimeCreated() != null) {
+            orderToUpdate.setTimeCreated(newOrder.getTimeCreated());
         }
         
         try {
@@ -280,6 +289,7 @@ public class OrderService {
                 List<OrderItem> newOrderItemsList = newOrder.getItems().stream()
                 .map(orderItemInfo -> {
                     OrderItem item = new OrderItem();
+                    item.setOrder(orderToUpdate);
                     item.setMenuItems(menuItemRepo.getById(orderItemInfo.getMenuItemId()));
                     item.setNotes(orderItemInfo.getNotes());
                     //TODO: actually figure out how to set discount properly

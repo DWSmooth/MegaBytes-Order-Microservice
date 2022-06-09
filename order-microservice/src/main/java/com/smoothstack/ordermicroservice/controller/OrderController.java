@@ -23,12 +23,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "ufd/order-service")
 public class OrderController {
     
     @Autowired
@@ -36,9 +34,11 @@ public class OrderController {
 
     // CRUD Mappings
 
-    @PostMapping(value = "{userId}/order")
+    @PostMapping(value = "/{userId}/order")
     public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder) 
     throws NoAvailableDriversException {
+        System.out.println("Got POST request.");
+        System.out.println(newOrder.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder));
     }
 
