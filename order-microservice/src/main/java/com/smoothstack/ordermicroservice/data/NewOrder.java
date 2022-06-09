@@ -1,5 +1,6 @@
 package com.smoothstack.ordermicroservice.data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +27,8 @@ public class NewOrder {
     private Double total;
 
     private Integer netLoyalty;
+
+    private LocalDateTime timeCreated;
 
     private List<Integer> restaurantIds;
 

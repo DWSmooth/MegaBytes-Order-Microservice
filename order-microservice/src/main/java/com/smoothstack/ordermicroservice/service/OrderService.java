@@ -256,6 +256,9 @@ public class OrderService {
         if(newOrder.getNetLoyalty() != null) {
             orderToUpdate.setNetLoyalty(newOrder.getNetLoyalty());;
         }
+        if(newOrder.getTimeCreated() != null) {
+            orderToUpdate.setTimeCreated(newOrder.getTimeCreated());
+        }
         
         try {
             if(newOrder.getRestaurantIds() != null) {
@@ -303,27 +306,6 @@ public class OrderService {
         }
 
         return orderToUpdate;
-    }
-
-    private OrderItem applyDataToOrderItem(NewOrderItem itemData) {
-        OrderItem item = new OrderItem();
-        if (itemData.getPrice() != null) {
-            item.setPrice(itemData.getPrice());
-        }
-        if (itemData.getDiscount() != null) {
-            item.setDiscount(itemData.getDiscount());
-        }
-        if (itemData.getMenuItemId() != null) {
-            Optional<MenuItem> menuItem = menuItemRepo.findById(itemData.getMenuItemId());
-            if (menuItem.isPresent()) {
-                item.setMenuItems(menuItem.get());
-            }
-            //TODO: Throw menu item not found exception
-        }
-        if (itemData.getNotes() != null) {
-            item.setNotes(itemData.getNotes());
-        }
-        return item;
     }
 
     /**
