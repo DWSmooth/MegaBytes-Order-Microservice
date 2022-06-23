@@ -54,6 +54,11 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
     }
 
+    @GetMapping(value = "/orders/driverless")
+    public ResponseEntity<List<OrderInformation>> getDriverlessOrders() {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getDriverlessOrders());
+    }
+
     @PutMapping(value = "/{userId}/orders/{orderId}")
     public ResponseEntity<OrderInformation> updateOrder(
         @PathVariable Integer userId, 
