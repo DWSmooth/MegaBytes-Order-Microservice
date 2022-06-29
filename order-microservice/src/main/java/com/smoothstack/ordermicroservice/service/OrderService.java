@@ -60,9 +60,9 @@ public class OrderService {
      * @return The front end data for the newly created order.
      */
     @Transactional
-    public OrderInformation createOrder(NewOrder newOrder) {
+    public OrderInformation createOrder(NewOrder newOrder, Integer userId) {
         Order orderToCreate = new Order();
-        orderToCreate = applyDataToOrder(newOrder, orderToCreate);
+        orderToCreate = applyDataToOrder(newOrder, orderToCreate, userId);
         return createFrontEndData(orderRepo.save(orderToCreate));
     }
     
@@ -145,7 +145,7 @@ public class OrderService {
         if (orderToUpdate.isPresent()) {
             if(orderToUpdate.get().getOrderStatus() == "placed") {
                 if (orderToUpdate.get().getCustomer().getId() == userId) {
-                    Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
+                    Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get(), userId);
                     return createFrontEndData(orderRepo.save(updatedOrder));
                 }
                 throw new UserMismatchException("User does not match user on order to be updated.");
@@ -225,7 +225,7 @@ public class OrderService {
      * @return The updated order object.
      */
     @Transactional
-    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) {
+    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate, Integer customerId) {
         
         // This functionality is now disabled to allow for the implementation of drivers selecting orders from a list of orders without drivers.
         /*if(orderToUpdate.getDriver() == null) {
@@ -242,6 +242,9 @@ public class OrderService {
 
         if (orderToUpdate.getOrderStatus() == null) {
             orderToUpdate.setOrderStatus("placed");
+        }
+        if (orderToUpdate.getCustomer() == null && userRepo.findById(customerId).isPresent()) {
+            orderToUpdate.setCustomer(userRepo.findById(customerId).get());
         }
 
         if(newOrder.getRestaurantNotes() != null) {
