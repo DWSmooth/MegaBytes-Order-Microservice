@@ -241,7 +241,7 @@ public class OrderService {
         }*/
 
         if (orderToUpdate.getOrderStatus() == null) {
-            orderToUpdate.setOrderStatus("Placed");
+            orderToUpdate.setOrderStatus("placed");
         }
 
         if(newOrder.getRestaurantNotes() != null) {
