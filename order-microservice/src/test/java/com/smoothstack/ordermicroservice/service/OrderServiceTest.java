@@ -384,7 +384,7 @@ public class OrderServiceTest {
 
         OrderInformation info = new OrderInformation();
         try {
-            info = service.createOrder(order);
+            info = service.createOrder(order, userRepo.findTopByUserName("testCustomer").get().getId());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -400,7 +400,7 @@ public class OrderServiceTest {
     public void doesServiceGetDriverlessOrders() {
 
         NewOrder order = createDummyOrder();
-        OrderInformation info = service.createOrder(order);
+        OrderInformation info = service.createOrder(order, userRepo.findTopByUserName("testCustomer").get().getId());
 
         List<OrderInformation> orders = service.getDriverlessOrders();
 
