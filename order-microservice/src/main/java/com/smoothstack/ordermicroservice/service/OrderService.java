@@ -14,12 +14,7 @@ import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.Restaurant;
 import com.smoothstack.common.models.User;
-import com.smoothstack.common.repositories.ActiveDriverRepository;
-import com.smoothstack.common.repositories.DiscountRepository;
-import com.smoothstack.common.repositories.MenuItemRepository;
-import com.smoothstack.common.repositories.OrderRepository;
-import com.smoothstack.common.repositories.RestaurantRepository;
-import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.common.repositories.*;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.NewOrderItem;
@@ -54,6 +49,9 @@ public class OrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepo;
+
+    @Autowired
+    private OrderItemRepository orderItemRepo;
 
     /**
      * Creates a new order.
@@ -128,22 +126,132 @@ public class OrderService {
     public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) 
     throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
         Optional<Order> orderToUpdate = orderRepo.findById(orderId);
-        if (orderToUpdate.isPresent()) {
-            if(orderToUpdate.get().getOrderStatus() == "placed") {
-                if (orderToUpdate.get().getCustomer().getId() == userId) {
+//        if (orderToUpdate.isPresent()) {
+//            System.out.println("order is present, checking order status");
+//            if(orderToUpdate.get().getOrderStatus() == "placed") {
+//                if (orderToUpdate.get().getCustomer().getId() == userId) {
                     try {
+
+                        orderUpdates.setItems(addKeepOrDisableItem(orderUpdates, orderToUpdate));
+                        System.out.println("orderUpdates after item checks: " + orderUpdates.getItems());
                         Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
+                        System.out.println("applyDataToOrderSuccessful");
+                        System.out.println("attempting to createFrontEndData");
                         return createFrontEndData(orderRepo.save(updatedOrder).getId());
                     } catch (NoAvailableDriversException e) {
                         throw e;
                     }
-                }
-                throw new UserMismatchException("User does not match user on order to be updated.");
-            }
-            throw new OrderNotUpdateableException("Order has progressed too far to update.");
-        }
-        throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be updated.");
+//                }
+//                throw new UserMismatchException("User does not match user on order to be updated.");
+//            }
+//            throw new OrderNotUpdateableException("Order has progressed too far to update.");
+//        }
+//        throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be updated.");
     }
+
+//    @Transactional
+    public List<NewOrderItem> addKeepOrDisableItem(NewOrder newOrder, Optional<Order> oldOrder){
+
+//        List<OrderInformation> processedOrders = new ArrayList<>();
+        List<NewOrderItem> itemHolder = new ArrayList<>();
+
+        // list orderItems
+        System.out.println("Older orders");
+        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+            System.out.println("old item: " + oldItem.getMenuItems().getId());
+        }
+
+        System.out.println("");
+
+        // list itemsForUpdate
+        System.out.println("Orders to be updated");
+        for (NewOrderItem updateItem : newOrder.getItems()) {
+            System.out.println("update item: " + updateItem.getMenuItemId());
+        }
+
+        System.out.println("");
+
+        // find match between old items and new items
+        System.out.println("finding matches menu item id's");
+        // streams implementation, service on
+        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+            for (NewOrderItem updateItem : newOrder.getItems()) {
+                if(oldItem.getMenuItems().getId() == updateItem.getMenuItemId()){
+                    System.out.println("found matches id's: " + updateItem.getMenuItemId());
+                    updateItem.setNotes("keep");
+                }
+            }
+        }
+
+        System.out.println("");
+
+        System.out.println("finding items user has removed from order");
+        boolean removeItem;
+        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+            removeItem = true;
+            for (NewOrderItem updateItem : newOrder.getItems()) {
+                if(oldItem.getMenuItems().getId() == updateItem.getMenuItemId()){
+                    removeItem = false;
+                }
+            }
+            if(removeItem == true){
+                System.out.println("remove item with menuItemId: " + oldItem.getMenuItems().getId());
+                oldItem.setEnabled(false);
+            }
+        }
+
+        System.out.println("");
+
+        System.out.println("finding items user added to order");
+        boolean addItem;
+        for (NewOrderItem updateItem : newOrder.getItems()) {
+            addItem = true;
+            for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+                if(updateItem.getMenuItemId() == oldItem.getMenuItems().getId()){
+                    addItem = false;
+                }
+            }
+            if(addItem == true){
+                System.out.println("itemToBeAdded : " + updateItem.getMenuItemId());
+                updateItem.setNotes("add");
+            }
+        }
+
+        // remove items marked as keep from updateItems
+        System.out.println("update items has duplicates from database");
+        for (NewOrderItem updateItem : newOrder.getItems()) {
+            if(updateItem.getNotes() == "keep"){
+//                newOrder.getItems().remove(updateItem);
+            } else {
+                itemHolder.add(updateItem);
+            }
+        }
+
+        System.out.println("");
+
+        // remove items marked for removal from database
+//        System.out.println("removing items requested by user");
+//        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+//            if(oldItem.getNotes() == "remove"){
+//                System.out.println("delete item with id: " + oldItem.getId());
+//                orderItemRepo.deleteById(oldItem.getId());
+//            }
+//        }
+
+
+        // set items marked for keep as return items
+        // list itemsForUpdate
+        System.out.println("Checks done. Items to be added to order on DB");
+        for (NewOrderItem updateItem : itemHolder) {
+            System.out.println("update item: " + updateItem.getMenuItemId());
+        }
+
+        System.out.println("");
+
+
+            return itemHolder;
+    }
+
 
     /**
      * Cancels an order by orderId and userId.
@@ -156,18 +264,18 @@ public class OrderService {
     public OrderInformation cancelOrder(Integer userId, Integer orderId) throws OrderNotFoundException, OrderNotCancelableException, UserMismatchException {
         Optional<Order> orderToCancel = orderRepo.findById(orderId);
         if (orderToCancel.isPresent()) {
-            if(orderToCancel.get().getOrderStatus() == "placed") {
-                if(orderToCancel.get().getCustomer().getId() == userId) {
+//            if(orderToCancel.get().getOrderStatus() == "placed") {
+//                if(orderToCancel.get().getCustomer().getId() == userId) {
                     orderToCancel.get().setOrderStatus("canceled");
                 
                     //TODO: Send confirmation to user email/phone that order has been canceled.
 
                     return createFrontEndData(orderRepo.save(orderToCancel.get()).getId());
                 }
-                throw new UserMismatchException("User does not match user on order to be canceled.");
-            }
-            throw new OrderNotCancelableException("Order has progressed too far to cancel.");
-        }
+//                throw new UserMismatchException("User does not match user on order to be canceled.");
+//            }
+//            throw new OrderNotCancelableException("Order has progressed too far to cancel.");
+//        }
         throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be canceled.");
     }
 
@@ -248,6 +356,7 @@ public class OrderService {
             orderToUpdate.setTax(newOrder.getTax());
         }
         if(newOrder.getTip() != null) {
+            System.out.println("updated tip amount");
             orderToUpdate.setTip(newOrder.getTip());
         }
         if(newOrder.getTotal() != null) {
@@ -311,7 +420,7 @@ public class OrderService {
     /**
      * Processes an order object into an OrderInformation Object without sensitive information.
      * 
-     * @param order The order to process.
+//     * @param order The order to process.
      * @return The processed order as an Order Information object.
      */
     @Transactional
@@ -385,6 +494,7 @@ public class OrderService {
                     item.setNotes(o.getNotes());
                     item.setDiscount(o.getDiscount());
                     item.setPrice(o.getPrice());
+                    item.setEnabled(o.isEnabled());
                     return item;
                 })
                 .collect(Collectors.toList())

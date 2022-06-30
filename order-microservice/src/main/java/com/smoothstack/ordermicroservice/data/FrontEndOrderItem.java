@@ -24,4 +24,6 @@ public class FrontEndOrderItem {
 
     private Double price;
 
+    private Boolean enabled;
+
 }
