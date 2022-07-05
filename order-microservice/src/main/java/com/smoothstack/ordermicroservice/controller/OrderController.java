@@ -35,11 +35,11 @@ public class OrderController {
     // CRUD Mappings
 
     @PostMapping(value = "/{userId}/order")
-    public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder)
+    public ResponseEntity<OrderInformation> createOrder(@RequestBody NewOrder newOrder, @PathVariable Integer userId) 
     throws NoAvailableDriversException {
         System.out.println("Got POST request.");
         System.out.println(newOrder.toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(newOrder, userId));
     }
 
     @GetMapping(value = "/{userId}/orders/{orderId}")
@@ -52,6 +52,11 @@ public class OrderController {
     public ResponseEntity<List<OrderInformation>> getOrderHistory(@PathVariable Integer userId) 
     throws UserNotFoundException {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderHistory(userId));
+    }
+
+    @GetMapping(value = "/orders/driverless")
+    public ResponseEntity<List<OrderInformation>> getDriverlessOrders() {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getDriverlessOrders());
     }
 
     @PutMapping(value = "/{userId}/orders/{orderId}")

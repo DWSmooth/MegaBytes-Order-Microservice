@@ -22,7 +22,6 @@ import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
-import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
@@ -65,14 +64,10 @@ public class OrderService {
      * @return The front end data for the newly created order.
      */
     @Transactional
-    public OrderInformation createOrder(NewOrder newOrder) throws NoAvailableDriversException {
+    public OrderInformation createOrder(NewOrder newOrder, Integer userId) {
         Order orderToCreate = new Order();
-        try {
-            orderToCreate = applyDataToOrder(newOrder, orderToCreate);
-        } catch (NoAvailableDriversException e) {
-            throw e;
-        }
-        return createFrontEndData(orderRepo.save(orderToCreate).getId());
+        orderToCreate = applyDataToOrder(newOrder, orderToCreate, userId);
+        return createFrontEndData(orderRepo.save(orderToCreate));
     }
     
     /**
@@ -87,7 +82,7 @@ public class OrderService {
         Optional<Order> order  = orderRepo.findById(orderId);
         if (order.isPresent()) {
             if (order.get().getCustomer().getId() == userId) {
-                return createFrontEndData(order.get().getId());
+                return createFrontEndData(order.get());
             }
             throw new UserMismatchException("User ID provided does not match order requested.");
         }
@@ -112,7 +107,27 @@ public class OrderService {
         
         if (orders != null && orders.size() > 0) {
             for (Order o: orders) {
-                processedOrders.add(createFrontEndData(o.getId()));
+                processedOrders.add(createFrontEndData(o));
+            }
+        }
+
+        return processedOrders;
+    }
+
+    /**
+     * Gets all orders in the DB that do not have drivers assigned.
+     * 
+     * @return The list of orders without assigned drivers.
+     */
+    @Transactional
+    public List<OrderInformation> getDriverlessOrders() {
+        List<OrderInformation> processedOrders = new ArrayList<>();
+        
+        List<Order> orders = orderRepo.findAllByDriverIsNull();
+
+        if (orders != null && orders.size() > 0) {
+            for (Order o: orders) {
+                processedOrders.add(createFrontEndData(o));
             }
         }
 
@@ -129,7 +144,7 @@ public class OrderService {
      */
     @Transactional
     public OrderInformation updateOrder(Integer userId, Integer orderId, NewOrder orderUpdates) 
-    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
+    throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
         Optional<Order> orderToUpdate = orderRepo.findById(orderId);
         if (orderToUpdate.isPresent()) {
             if(orderToUpdate.get().getOrderStatus().equals("placed")) {
@@ -226,7 +241,7 @@ public class OrderService {
                 
                     //TODO: Send confirmation to user email/phone that order has been canceled.
 
-                    return createFrontEndData(orderRepo.save(orderToCancel.get()).getId());
+                    return createFrontEndData(orderRepo.save(orderToCancel.get()));
                 }
                 throw new UserMismatchException("User does not match user on order to be canceled.");
             }
@@ -279,8 +294,10 @@ public class OrderService {
      * @return The updated order object.
      */
     @Transactional
-    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate) throws NoAvailableDriversException {
-        if(orderToUpdate.getDriver() == null) {
+    private Order applyDataToOrder(NewOrder newOrder, Order orderToUpdate, Integer customerId) {
+        
+        // This functionality is now disabled to allow for the implementation of drivers selecting orders from a list of orders without drivers.
+        /*if(orderToUpdate.getDriver() == null) {
             //TODO: Find driver closest to restaurant, need to figure out location services
             List<ActiveDriver> drivers = driverRepo.findAll();
             if(drivers.size() > 0) {
@@ -290,10 +307,13 @@ public class OrderService {
             } else {
                 throw new NoAvailableDriversException("No drivers availible at this time, try again later.");
             }
-        }
+        }*/
 
         if (orderToUpdate.getOrderStatus() == null) {
-            orderToUpdate.setOrderStatus("Placed");
+            orderToUpdate.setOrderStatus("placed");
+        }
+        if (orderToUpdate.getCustomer() == null && userRepo.findById(customerId).isPresent()) {
+            orderToUpdate.setCustomer(userRepo.findById(customerId).get());
         }
 
         if(newOrder.getRestaurantNotes() != null) {
@@ -379,14 +399,8 @@ public class OrderService {
      * @return The processed order as an Order Information object.
      */
     @Transactional
-    public OrderInformation createFrontEndData(Integer orderId) {
+    public OrderInformation createFrontEndData(Order order) {
 
-        Optional<Order> orderOptional = orderRepo.findById(orderId);
-        if (!orderOptional.isPresent()) {
-            System.out.println("Order not found!");
-            return null;
-        }
-        Order order = orderOptional.get();
         OrderInformation info = new OrderInformation();
 
         if (order.getId() != null) {
@@ -425,7 +439,7 @@ public class OrderService {
         if (order.getNetLoyalty() != null) {
             info.setNetLoyalty(order.getNetLoyalty());
         }
-        if (order.getDriver().getUserInformation().getFirstName() != null) {
+        if (order.getDriver() != null && order.getDriver().getUserInformation() != null) {
             info.setDriverFirstName(order.getDriver().getUserInformation().getFirstName());
         }
         if (order.getRestaurants() != null) {
