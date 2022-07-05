@@ -1,4 +1,4 @@
-/*package com.smoothstack.ordermicroservice;
+package com.smoothstack.ordermicroservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,4 +10,4 @@ class OrderMicroserviceApplicationTests {
 	void contextLoads() {
 	}
 
-}*/
+}

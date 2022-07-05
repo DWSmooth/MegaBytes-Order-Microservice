@@ -19,6 +19,7 @@ import com.smoothstack.common.repositories.MenuItemRepository;
 import com.smoothstack.common.repositories.OrderRepository;
 import com.smoothstack.common.repositories.RestaurantRepository;
 import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
@@ -52,6 +53,9 @@ public class OrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepo;
+
+    @Autowired
+    private OrderItemRepository orderItemRepo;
 
     /**
      * Creates a new order.
@@ -143,10 +147,15 @@ public class OrderService {
     throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException {
         Optional<Order> orderToUpdate = orderRepo.findById(orderId);
         if (orderToUpdate.isPresent()) {
-            if(orderToUpdate.get().getOrderStatus() == "placed") {
+            if(orderToUpdate.get().getOrderStatus().equals("placed")) {
                 if (orderToUpdate.get().getCustomer().getId() == userId) {
-                    Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get(), userId);
-                    return createFrontEndData(orderRepo.save(updatedOrder));
+                    try {
+                        orderUpdates.setItems(addKeepOrDisableItem(orderUpdates, orderToUpdate));
+                        Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
+                        return createFrontEndData(orderRepo.save(updatedOrder).getId());
+                    } catch (NoAvailableDriversException e) {
+                        throw e;
+                    }
                 }
                 throw new UserMismatchException("User does not match user on order to be updated.");
             }
@@ -154,6 +163,66 @@ public class OrderService {
         }
         throw new OrderNotFoundException("No order with ID: " + orderId + " exists to be updated.");
     }
+
+//    @Transactional
+    public List<NewOrderItem> addKeepOrDisableItem(NewOrder newOrder, Optional<Order> oldOrder){
+        List<NewOrderItem> itemHolder = new ArrayList<>();
+
+        // find match between old items and new items
+        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+            for (NewOrderItem updateItem : newOrder.getItems()) {
+                if(oldItem.getMenuItems().getId() == updateItem.getMenuItemId()){
+                    updateItem.setNotes("keep");
+                }
+            }
+        }
+
+        // finding items user has removed from order
+        boolean removeItem;
+        for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+            removeItem = true;
+            for (NewOrderItem updateItem : newOrder.getItems()) {
+                if(oldItem.getMenuItems().getId() == updateItem.getMenuItemId()){
+                    removeItem = false;
+                }
+            }
+            if(removeItem == true){
+                oldItem.setEnabled(false);
+            }
+        }
+
+        // finding items user added to order
+        boolean addItem;
+        for (NewOrderItem updateItem : newOrder.getItems()) {
+            addItem = true;
+            for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
+                if(updateItem.getMenuItemId() == oldItem.getMenuItems().getId()){
+                    addItem = false;
+                }
+            }
+            if(addItem == true){
+                System.out.println("itemToBeAdded : " + updateItem.getMenuItemId());
+                updateItem.setNotes("add");
+            }
+        }
+
+        // remove items marked as keep from updateItems
+        for (NewOrderItem updateItem : newOrder.getItems()) {
+            if(updateItem.getNotes() == "keep"){
+            //    newOrder.getItems().remove(updateItem);
+            } else {
+                itemHolder.add(updateItem);
+            }
+        }
+
+        // list itemsForUpdate
+        for (NewOrderItem updateItem : itemHolder) {
+            System.out.println("update item: " + updateItem.getMenuItemId());
+        }
+
+        return itemHolder;
+    }
+
 
     /**
      * Cancels an order by orderId and userId.
@@ -394,6 +463,7 @@ public class OrderService {
                     item.setNotes(o.getNotes());
                     item.setDiscount(o.getDiscount());
                     item.setPrice(o.getPrice());
+                    item.setEnabled(o.isEnabled());
                     return item;
                 })
                 .collect(Collectors.toList())
