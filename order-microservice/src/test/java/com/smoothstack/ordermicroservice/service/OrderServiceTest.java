@@ -30,7 +30,6 @@ import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
 import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -330,7 +329,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesUpdateOrderThrowOrderNotUpdateable() {
 
         User testUser = userRepo.findTopByUserName("testCustomer").get();

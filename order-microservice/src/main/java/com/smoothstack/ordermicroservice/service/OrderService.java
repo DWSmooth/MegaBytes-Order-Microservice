@@ -9,12 +9,17 @@ import javax.transaction.Transactional;
 
 import com.smoothstack.common.models.ActiveDriver;
 import com.smoothstack.common.models.Discount;
-import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
 import com.smoothstack.common.models.Restaurant;
 import com.smoothstack.common.models.User;
-import com.smoothstack.common.repositories.*;
+import com.smoothstack.common.repositories.ActiveDriverRepository;
+import com.smoothstack.common.repositories.DiscountRepository;
+import com.smoothstack.common.repositories.MenuItemRepository;
+import com.smoothstack.common.repositories.OrderRepository;
+import com.smoothstack.common.repositories.RestaurantRepository;
+import com.smoothstack.common.repositories.UserRepository;
+import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.NewOrderItem;
@@ -127,16 +132,11 @@ public class OrderService {
     throws OrderNotFoundException, OrderNotUpdateableException, UserMismatchException, NoAvailableDriversException {
         Optional<Order> orderToUpdate = orderRepo.findById(orderId);
         if (orderToUpdate.isPresent()) {
-            System.out.println("order is present, checking order status");
-            System.out.println("orderStatus: " + orderToUpdate.get().getOrderStatus());
             if(orderToUpdate.get().getOrderStatus().equals("placed")) {
                 if (orderToUpdate.get().getCustomer().getId() == userId) {
                     try {
                         orderUpdates.setItems(addKeepOrDisableItem(orderUpdates, orderToUpdate));
-                        System.out.println("orderUpdates after item checks: " + orderUpdates.getItems());
                         Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
-                        System.out.println("applyDataToOrderSuccessful");
-                        System.out.println("attempting to createFrontEndData");
                         return createFrontEndData(orderRepo.save(updatedOrder).getId());
                     } catch (NoAvailableDriversException e) {
                         throw e;
@@ -157,7 +157,6 @@ public class OrderService {
         for(OrderItem oldItem : oldOrder.get().getOrderItems()) {
             for (NewOrderItem updateItem : newOrder.getItems()) {
                 if(oldItem.getMenuItems().getId() == updateItem.getMenuItemId()){
-                    System.out.println("found matches id's: " + updateItem.getMenuItemId());
                     updateItem.setNotes("keep");
                 }
             }
@@ -173,7 +172,6 @@ public class OrderService {
                 }
             }
             if(removeItem == true){
-                System.out.println("remove item with menuItemId: " + oldItem.getMenuItems().getId());
                 oldItem.setEnabled(false);
             }
         }
@@ -194,7 +192,6 @@ public class OrderService {
         }
 
         // remove items marked as keep from updateItems
-        System.out.println("update items has duplicates from database");
         for (NewOrderItem updateItem : newOrder.getItems()) {
             if(updateItem.getNotes() == "keep"){
             //    newOrder.getItems().remove(updateItem);
@@ -204,7 +201,6 @@ public class OrderService {
         }
 
         // list itemsForUpdate
-        System.out.println("Checks done. Items to be added to order on DB");
         for (NewOrderItem updateItem : itemHolder) {
             System.out.println("update item: " + updateItem.getMenuItemId());
         }
@@ -316,7 +312,6 @@ public class OrderService {
             orderToUpdate.setTax(newOrder.getTax());
         }
         if(newOrder.getTip() != null) {
-            System.out.println("updated tip amount");
             orderToUpdate.setTip(newOrder.getTip());
         }
         if(newOrder.getTotal() != null) {
@@ -380,7 +375,7 @@ public class OrderService {
     /**
      * Processes an order object into an OrderInformation Object without sensitive information.
      * 
-//     * @param order The order to process.
+     * @param order The order to process.
      * @return The processed order as an Order Information object.
      */
     @Transactional
