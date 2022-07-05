@@ -58,7 +58,11 @@ public class OrderController {
     }
 
     @PutMapping(value = "/{userId}/orders/{orderId}/cancel")
-    public ResponseEntity<OrderInformation> cancelOrder(@PathVariable Integer userId, @PathVariable Integer orderId, @RequestHeader("cancel") Boolean cancel) 
+    public ResponseEntity<OrderInformation> cancelOrder(
+            @PathVariable Integer userId,
+            @PathVariable Integer orderId,
+            @RequestHeader("cancel") Boolean cancel
+    )
     throws OrderNotFoundException, OrderNotCancelableException, UserMismatchException {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.cancelOrder(userId, orderId));
     }

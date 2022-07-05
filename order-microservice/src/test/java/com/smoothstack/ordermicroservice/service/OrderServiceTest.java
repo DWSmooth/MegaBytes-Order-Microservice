@@ -205,7 +205,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesCancelOrderThrowOrderNotCancelable() {
 
         User testUser = userRepo.findTopByUserName("testCustomer").get();
@@ -231,7 +230,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesCancelOrderThrowUserMismatch() {
 
         User testUser = userRepo.findTopByUserName("testDriver").get();
@@ -262,7 +260,6 @@ public class OrderServiceTest {
     // Test updateOrder
 
     @Test
-    @Disabled
     public void doesServiceUpdateOrder() {
         User testUser = userRepo.findTopByUserName("testCustomer").get();
         boolean threwException = false;
@@ -303,7 +300,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesUpdateOrderThrowOrderNotFound() {
 
         User testUser = userRepo.findTopByUserName("testCustomer").get();
@@ -366,7 +362,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesUpdateOrderThrowUserMismatch() {
 
         User testUser = userRepo.findTopByUserName("testDriver").get();
@@ -400,7 +395,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    @Disabled
     public void doesUpdateOrderThrowNoAvailableDriver() {
 
         User testUser = userRepo.findTopByUserName("testDriver").get();
