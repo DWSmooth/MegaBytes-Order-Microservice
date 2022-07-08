@@ -22,6 +22,7 @@ import com.smoothstack.common.repositories.UserRepository;
 import com.smoothstack.common.repositories.OrderItemRepository;
 import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
+import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
 import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
 import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
@@ -149,13 +150,9 @@ public class OrderService {
         if (orderToUpdate.isPresent()) {
             if(orderToUpdate.get().getOrderStatus().equals("placed")) {
                 if (orderToUpdate.get().getCustomer().getId() == userId) {
-                    try {
                         orderUpdates.setItems(addKeepOrDisableItem(orderUpdates, orderToUpdate));
-                        Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get());
-                        return createFrontEndData(orderRepo.save(updatedOrder).getId());
-                    } catch (NoAvailableDriversException e) {
-                        throw e;
-                    }
+                        Order updatedOrder = applyDataToOrder(orderUpdates, orderToUpdate.get(), userId);
+                        return createFrontEndData(orderRepo.save(updatedOrder));
                 }
                 throw new UserMismatchException("User does not match user on order to be updated.");
             }
