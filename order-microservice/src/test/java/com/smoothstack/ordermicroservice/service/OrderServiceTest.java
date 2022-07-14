@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.smoothstack.common.exceptions.*;
 import com.smoothstack.common.models.MenuItem;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.User;
@@ -21,11 +22,6 @@ import com.smoothstack.common.services.CommonLibraryTestingService;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
-import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
-import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

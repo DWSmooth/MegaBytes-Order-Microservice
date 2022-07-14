@@ -2,14 +2,9 @@ package com.smoothstack.ordermicroservice.controller;
 
 import java.util.List;
 
+import com.smoothstack.common.exceptions.*;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
-import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
-import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
-import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 import com.smoothstack.ordermicroservice.service.OrderService;
 
 import org.springframework.beans.factory.annotation.Autowired;
