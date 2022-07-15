@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import com.smoothstack.common.models.ActiveDriver;
+import com.smoothstack.common.exceptions.*;
 import com.smoothstack.common.models.Discount;
 import com.smoothstack.common.models.Order;
 import com.smoothstack.common.models.OrderItem;
@@ -24,12 +24,6 @@ import com.smoothstack.ordermicroservice.data.FrontEndOrderItem;
 import com.smoothstack.ordermicroservice.data.NewOrder;
 import com.smoothstack.ordermicroservice.data.NewOrderItem;
 import com.smoothstack.ordermicroservice.data.OrderInformation;
-import com.smoothstack.ordermicroservice.exceptions.NoAvailableDriversException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotCancelableException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotFoundException;
-import com.smoothstack.ordermicroservice.exceptions.OrderNotUpdateableException;
-import com.smoothstack.ordermicroservice.exceptions.UserMismatchException;
-import com.smoothstack.ordermicroservice.exceptions.UserNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
